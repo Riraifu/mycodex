@@ -31,11 +31,14 @@
         </dl>
       </section>
 
+      <nav id="category-tabs" class="category-tabs" aria-label="Skill categories"></nav>
+
       <section class="panel bulk-panel" aria-label="Bulk skill actions">
         <div>
           <p class="section-kicker">Bulk actions</p>
-          <h2>批量管理 skills</h2>
-          <p>只会影响可编辑 skill，受保护项会自动跳过。</p>
+          <h2 id="category-title">批量管理 skills</h2>
+          <p id="category-description">只会影响当前分类里的可编辑 skill，受保护项会自动跳过。</p>
+          <p id="category-warning" class="category-warning"></p>
         </div>
         <div class="actions">
           <button id="enable-all" class="ghost positive" type="button">Enable all</button>

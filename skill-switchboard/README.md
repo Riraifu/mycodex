@@ -9,7 +9,14 @@ The app does not delete or edit skill files. It toggles a skill by moving its di
 - Enabled: `/Users/liyizhu/.codex/skills/<skill-name>`
 - Disabled: `/Users/liyizhu/.codex/skills.disabled/<skill-name>`
 
-Reserved entries such as `.system` and hidden directories cannot be toggled.
+The web UI separates skills into categories so different skill sources are not mixed together:
+
+- Personal: `/Users/liyizhu/.codex/skills`
+- System: `/Users/liyizhu/.codex/skills/.system`
+- Agent: `/Users/liyizhu/.agents/skills`
+- Plugins: discovered under `/Users/liyizhu/.codex/plugins/cache/**/skills`
+
+Each category has its own list, individual toggles, and enable-all/disable-all actions. Plugin skills live in plugin cache directories, so plugin updates may restore or overwrite plugin skill changes.
 
 ## Usage
 

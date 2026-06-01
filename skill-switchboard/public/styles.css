@@ -141,6 +141,44 @@ h1 {
   padding: 18px;
 }
 
+.category-tabs {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin: 18px 0 0;
+}
+
+.category-tab {
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 14px;
+  background: rgba(28, 39, 58, 0.56);
+  color: var(--muted);
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 160ms ease, background 160ms ease, transform 160ms ease;
+}
+
+.category-tab:hover,
+.category-tab.active {
+  border-color: rgba(114, 223, 172, 0.4);
+  background: rgba(49, 63, 89, 0.78);
+  color: var(--text);
+  transform: translateY(-1px);
+}
+
+.category-tab strong {
+  display: block;
+  font-size: 0.96rem;
+}
+
+.category-tab span {
+  display: block;
+  margin-top: 6px;
+  color: var(--faint);
+  font-size: 0.78rem;
+}
+
 .bulk-panel h2 {
   margin: 4px 0 0;
   font-size: 1.08rem;
@@ -151,6 +189,15 @@ h1 {
   margin: 6px 0 0;
   color: var(--muted);
   font-size: 0.92rem;
+}
+
+.bulk-panel .category-warning {
+  display: none;
+  color: var(--amber);
+}
+
+.bulk-panel .category-warning.visible {
+  display: block;
 }
 
 .section-kicker {
@@ -414,6 +461,7 @@ h1 {
   }
 
   .hero-panel,
+  .category-tabs,
   .bulk-panel,
   .controls,
   .skill-row {

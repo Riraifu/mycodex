@@ -123,3 +123,38 @@ test('setAllSkills enables every editable disabled skill', async () => {
   assert.equal((await fs.stat(path.join(skillsDir, 'brainstorming', 'SKILL.md'))).isFile(), true);
   assert.equal((await fs.stat(path.join(skillsDir, 'writing-plans', 'SKILL.md'))).isFile(), true);
 });
+
+test('createSwitchboardStore keeps categories separated and supports plugin source ids', async () => {
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'skill-switchboard-categories-'));
+  const personalDir = path.join(root, 'personal');
+  const personalDisabledDir = path.join(root, 'personal.disabled');
+  const agentDir = path.join(root, 'agent');
+  const agentDisabledDir = path.join(root, 'agent.disabled');
+  const pluginDir = path.join(root, 'plugins', 'browser', 'skills');
+  const pluginDisabledDir = path.join(root, 'plugins', 'browser', 'skills.disabled');
+
+  await createSkill(personalDir, 'brainstorming');
+  await createSkill(agentDir, 'gold-trump-monitor');
+  await createSkill(pluginDir, 'browser');
+
+  const { createSwitchboardStore } = require('../src/skillStore');
+  const store = createSwitchboardStore({
+    categories: [
+      { id: 'personal', label: 'Personal', sources: [{ id: 'personal', label: 'Personal', skillsDir: personalDir, disabledDir: personalDisabledDir }] },
+      { id: 'agent', label: 'Agent', sources: [{ id: 'agent', label: 'Agent', skillsDir: agentDir, disabledDir: agentDisabledDir }] },
+      { id: 'plugins', label: 'Plugins', sources: [{ id: 'browser-plugin', label: 'Browser plugin', skillsDir: pluginDir, disabledDir: pluginDisabledDir }] }
+    ]
+  });
+
+  const personal = await store.listSkills('personal');
+  const agent = await store.listSkills('agent');
+  const plugins = await store.listSkills('plugins');
+
+  assert.deepEqual(personal.map((skill) => skill.name), ['brainstorming']);
+  assert.deepEqual(agent.map((skill) => skill.name), ['gold-trump-monitor']);
+  assert.deepEqual(plugins.map((skill) => [skill.name, skill.sourceLabel]), [['browser', 'Browser plugin']]);
+
+  await store.toggleSkill('plugins', plugins[0].id, false);
+  assert.equal((await fs.stat(path.join(pluginDisabledDir, 'browser', 'SKILL.md'))).isFile(), true);
+  assert.equal((await fs.stat(path.join(personalDir, 'brainstorming', 'SKILL.md'))).isFile(), true);
+});
