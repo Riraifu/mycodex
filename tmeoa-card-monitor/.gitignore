@@ -1,0 +1,7 @@
+notify-config.json
+state.json
+state.json.bak*
+logs/
+chrome-profile/
+popup-profile/
+.DS_Store

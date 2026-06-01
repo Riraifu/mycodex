@@ -1,0 +1,7 @@
+{
+  "wechatWebhookUrl": "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=YOUR_KEY_HERE",
+  "notifyWechatOnSuccess": true,
+  "notifyWechatOnFailure": false,
+  "notifyWechatOnPending": false,
+  "mentionAllOnSuccess": true
+}

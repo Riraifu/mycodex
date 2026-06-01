@@ -1,0 +1,12 @@
+**/.DS_Store
+
+# Local auth/runtime artifacts
+test_wechat/lark-cli-auth-qrcode.png
+
+# TME OA monitor local state and credentials
+tmeoa-card-monitor/notify-config.json
+tmeoa-card-monitor/state.json
+tmeoa-card-monitor/state.json.bak*
+tmeoa-card-monitor/logs/
+tmeoa-card-monitor/chrome-profile/
+tmeoa-card-monitor/popup-profile/
