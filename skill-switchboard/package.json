@@ -1,0 +1,14 @@
+{
+  "name": "skill-switchboard",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Local web switchboard for enabling and disabling personal Codex skills.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Skill Switchboard</title>
+    <link rel="stylesheet" href="/styles.css">
+  </head>
+  <body>
+    <main class="shell">
+      <section class="hero">
+        <p class="eyebrow">Codex Local Control</p>
+        <h1>Skill Switchboard</h1>
+        <p class="lede">一键开启或关闭个人 Codex skills。关闭时只会移动目录，不会删除或改写内容。</p>
+      </section>
+
+      <section class="toolbar" aria-label="Skill controls">
+        <label class="search">
+          <span>搜索 skill</span>
+          <input id="search" type="search" placeholder="例如 brainstorming">
+        </label>
+        <button id="refresh" class="ghost" type="button">刷新</button>
+      </section>
+
+      <p id="message" class="message" role="status"></p>
+      <section id="skills" class="skills" aria-live="polite"></section>
+    </main>
+    <script src="/app.js"></script>
+  </body>
+</html>
