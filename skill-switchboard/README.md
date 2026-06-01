@@ -24,6 +24,16 @@ Open:
 http://127.0.0.1:8787
 ```
 
+## Double-Click Launcher
+
+There is also a macOS launcher:
+
+```text
+/Users/liyizhu/Desktop/Skill Switchboard.command
+```
+
+Double-click it to start the local server if needed and open the web panel automatically.
+
 ## Environment Overrides
 
 ```bash

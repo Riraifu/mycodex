@@ -113,9 +113,40 @@ function createSkillStore({ skillsDir, disabledDir, reservedNames = new Set() })
     };
   }
 
+  async function setAllSkills(enabled) {
+    const skills = await listSkills();
+    const changed = [];
+    const skipped = [];
+
+    for (const skill of skills) {
+      if (skill.reserved) {
+        skipped.push({ ...skill, reason: 'reserved' });
+        continue;
+      }
+
+      if (skill.enabled === enabled) {
+        skipped.push({ ...skill, reason: 'already-set' });
+        continue;
+      }
+
+      try {
+        changed.push(await toggleSkill(skill.name, enabled));
+      } catch (error) {
+        skipped.push({ ...skill, reason: error.message || 'failed' });
+      }
+    }
+
+    return {
+      enabled,
+      changed,
+      skipped
+    };
+  }
+
   return {
     listSkills,
     toggleSkill,
+    setAllSkills,
     isReserved
   };
 }

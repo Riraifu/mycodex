@@ -93,3 +93,33 @@ test('toggleSkill rejects path traversal names', async () => {
     /invalid skill name/i
   );
 });
+
+test('setAllSkills disables every editable enabled skill and skips reserved entries', async () => {
+  const { skillsDir, disabledDir, store } = await makeTempStore();
+  await createSkill(skillsDir, 'brainstorming');
+  await createSkill(skillsDir, 'writing-plans');
+  await createSkill(skillsDir, '.system');
+
+  const result = await store.setAllSkills(false);
+
+  assert.equal(result.enabled, false);
+  assert.equal(result.changed.length, 2);
+  assert.deepEqual(result.changed.map((skill) => skill.name).sort(), ['brainstorming', 'writing-plans']);
+  assert.equal(result.skipped.some((skill) => skill.name === '.system' && skill.reason === 'reserved'), true);
+  assert.equal((await fs.stat(path.join(disabledDir, 'brainstorming', 'SKILL.md'))).isFile(), true);
+  assert.equal((await fs.stat(path.join(disabledDir, 'writing-plans', 'SKILL.md'))).isFile(), true);
+  assert.equal((await fs.stat(path.join(skillsDir, '.system', 'SKILL.md'))).isFile(), true);
+});
+
+test('setAllSkills enables every editable disabled skill', async () => {
+  const { skillsDir, disabledDir, store } = await makeTempStore();
+  await createSkill(disabledDir, 'brainstorming');
+  await createSkill(disabledDir, 'writing-plans');
+
+  const result = await store.setAllSkills(true);
+
+  assert.equal(result.enabled, true);
+  assert.deepEqual(result.changed.map((skill) => skill.name).sort(), ['brainstorming', 'writing-plans']);
+  assert.equal((await fs.stat(path.join(skillsDir, 'brainstorming', 'SKILL.md'))).isFile(), true);
+  assert.equal((await fs.stat(path.join(skillsDir, 'writing-plans', 'SKILL.md'))).isFile(), true);
+});

@@ -9,6 +9,11 @@ const skillsEl = document.querySelector('#skills');
 const messageEl = document.querySelector('#message');
 const searchEl = document.querySelector('#search');
 const refreshEl = document.querySelector('#refresh');
+const enableAllEl = document.querySelector('#enable-all');
+const disableAllEl = document.querySelector('#disable-all');
+const enabledCountEl = document.querySelector('#enabled-count');
+const disabledCountEl = document.querySelector('#disabled-count');
+const totalCountEl = document.querySelector('#total-count');
 
 function setMessage(text, isError = false) {
   messageEl.textContent = text;
@@ -20,10 +25,20 @@ function statusLabel(skill) {
   return skill.enabled ? 'Enabled' : 'Disabled';
 }
 
+function updateStats() {
+  const editable = state.skills.filter((skill) => !skill.reserved);
+  const enabled = editable.filter((skill) => skill.enabled).length;
+  const disabled = editable.length - enabled;
+  enabledCountEl.textContent = String(enabled);
+  disabledCountEl.textContent = String(disabled);
+  totalCountEl.textContent = String(state.skills.length);
+}
+
 function render() {
   const query = state.query.trim().toLowerCase();
   const visible = state.skills.filter((skill) => skill.name.toLowerCase().includes(query));
   skillsEl.innerHTML = '';
+  updateStats();
 
   if (visible.length === 0) {
     const empty = document.createElement('p');
@@ -34,33 +49,46 @@ function render() {
   }
 
   for (const skill of visible) {
-    const card = document.createElement('article');
-    card.className = 'card';
+    const row = document.createElement('article');
+    row.className = 'skill-row';
 
-    const header = document.createElement('header');
-    const titleWrap = document.createElement('div');
+    const main = document.createElement('div');
+    main.className = 'skill-main';
+
+    const nameLine = document.createElement('div');
+    nameLine.className = 'name-line';
+
+    const dot = document.createElement('span');
+    dot.className = `status-dot ${skill.reserved ? 'reserved' : skill.enabled ? '' : 'disabled'}`;
+    dot.setAttribute('aria-hidden', 'true');
+
     const title = document.createElement('h2');
     title.className = 'name';
     title.textContent = skill.name;
+    nameLine.append(dot, title);
+
     const pathText = document.createElement('p');
     pathText.className = 'path';
     pathText.textContent = skill.path;
-    titleWrap.append(title, pathText);
+    main.append(nameLine, pathText);
 
     const badge = document.createElement('span');
     badge.className = `badge ${skill.reserved ? 'reserved' : skill.enabled ? '' : 'disabled'}`;
     badge.textContent = statusLabel(skill);
-    header.append(titleWrap, badge);
 
     const button = document.createElement('button');
-    button.className = `switch ${skill.enabled ? '' : 'off'}`;
+    button.className = `switch ${skill.reserved ? 'reserved' : skill.enabled ? '' : 'off'}`;
     button.type = 'button';
     button.disabled = skill.reserved;
-    button.textContent = skill.reserved ? '受保护' : skill.enabled ? '关闭' : '开启';
+    button.setAttribute('aria-pressed', String(skill.enabled));
+    button.setAttribute('aria-label', `${skill.enabled ? '关闭' : '开启'} ${skill.name}`);
+    const buttonLabel = document.createElement('span');
+    buttonLabel.textContent = skill.reserved ? '受保护' : skill.enabled ? '关闭' : '开启';
+    button.append(buttonLabel);
     button.addEventListener('click', () => toggleSkill(skill));
 
-    card.append(header, button);
-    skillsEl.append(card);
+    row.append(main, badge, button);
+    skillsEl.append(row);
   }
 }
 
@@ -97,6 +125,28 @@ async function toggleSkill(skill) {
   }
 }
 
+async function setAllSkills(enabled) {
+  setMessage(`${enabled ? '开启' : '关闭'}所有可编辑 skills...`);
+
+  try {
+    const response = await fetch('/api/skills/bulk', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ enabled })
+    });
+    const body = await response.json();
+    if (!response.ok) {
+      throw new Error(body.error || '批量切换失败');
+    }
+    const changed = body.result.changed.length;
+    const skipped = body.result.skipped.length;
+    setMessage(`已${enabled ? '开启' : '关闭'} ${changed} 个 skill，跳过 ${skipped} 个。`);
+    await loadSkills();
+  } catch (error) {
+    setMessage(error.message, true);
+  }
+}
+
 searchEl.addEventListener('input', () => {
   state.query = searchEl.value;
   render();
@@ -104,6 +154,14 @@ searchEl.addEventListener('input', () => {
 
 refreshEl.addEventListener('click', () => {
   loadSkills().catch((error) => setMessage(error.message, true));
+});
+
+enableAllEl.addEventListener('click', () => {
+  setAllSkills(true);
+});
+
+disableAllEl.addEventListener('click', () => {
+  setAllSkills(false);
 });
 
 loadSkills().catch((error) => setMessage(error.message, true));

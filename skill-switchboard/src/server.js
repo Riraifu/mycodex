@@ -74,6 +74,18 @@ function createServer({ store, publicDir = DEFAULT_PUBLIC_DIR }) {
         return;
       }
 
+      if (request.method === 'GET' && url.pathname === '/api/health') {
+        sendJson(response, 200, { ok: true, features: ['bulk'] });
+        return;
+      }
+
+      if (request.method === 'POST' && url.pathname === '/api/skills/bulk') {
+        const body = await readJson(request);
+        const result = await store.setAllSkills(Boolean(body.enabled));
+        sendJson(response, 200, { result });
+        return;
+      }
+
       const toggleMatch = url.pathname.match(/^\/api\/skills\/([^/]+)\/toggle$/);
       if (request.method === 'POST' && toggleMatch) {
         const body = await readJson(request);

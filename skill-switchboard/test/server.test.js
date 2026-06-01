@@ -70,3 +70,32 @@ test('GET / serves the static app', async (t) => {
   assert.equal(response.status, 200);
   assert.match(text, /ok/);
 });
+
+test('POST /api/skills/bulk sets all editable skills to requested state', async (t) => {
+  const { server, baseUrl } = await makeFixture();
+  t.after(() => server.close());
+
+  const response = await fetch(`${baseUrl}/api/skills/bulk`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ enabled: false })
+  });
+  const body = await response.json();
+
+  assert.equal(response.status, 200);
+  assert.equal(body.result.enabled, false);
+  assert.deepEqual(body.result.changed.map((skill) => skill.name), ['brainstorming']);
+});
+
+
+test('GET /api/health reports available features', async (t) => {
+  const { server, baseUrl } = await makeFixture();
+  t.after(() => server.close());
+
+  const response = await fetch(`${baseUrl}/api/health`);
+  const body = await response.json();
+
+  assert.equal(response.status, 200);
+  assert.equal(body.ok, true);
+  assert.equal(body.features.includes('bulk'), true);
+});

@@ -8,22 +8,51 @@
   </head>
   <body>
     <main class="shell">
-      <section class="hero">
-        <p class="eyebrow">Codex Local Control</p>
-        <h1>Skill Switchboard</h1>
-        <p class="lede">一键开启或关闭个人 Codex skills。关闭时只会移动目录，不会删除或改写内容。</p>
+      <section class="panel hero-panel">
+        <div class="hero-copy">
+          <p class="eyebrow">Codex Skill Control</p>
+          <h1>Skill Switchboard</h1>
+          <p class="lede">用一个本地控制台管理个人 skills。关闭时只移动目录，不删除、不改写内容。</p>
+        </div>
+
+        <dl class="stats" aria-label="Skill statistics">
+          <div>
+            <dt>Enabled</dt>
+            <dd id="enabled-count">-</dd>
+          </div>
+          <div>
+            <dt>Disabled</dt>
+            <dd id="disabled-count">-</dd>
+          </div>
+          <div>
+            <dt>Total</dt>
+            <dd id="total-count">-</dd>
+          </div>
+        </dl>
       </section>
 
-      <section class="toolbar" aria-label="Skill controls">
+      <section class="panel bulk-panel" aria-label="Bulk skill actions">
+        <div>
+          <p class="section-kicker">Bulk actions</p>
+          <h2>批量管理 skills</h2>
+          <p>只会影响可编辑 skill，受保护项会自动跳过。</p>
+        </div>
+        <div class="actions">
+          <button id="enable-all" class="ghost positive" type="button">Enable all</button>
+          <button id="disable-all" class="ghost danger" type="button">Disable all</button>
+        </div>
+      </section>
+
+      <section class="panel controls" aria-label="Skill controls">
         <label class="search">
-          <span>搜索 skill</span>
-          <input id="search" type="search" placeholder="例如 brainstorming">
+          <span>Search skills</span>
+          <input id="search" type="search" placeholder="brainstorming, tdd, review...">
         </label>
-        <button id="refresh" class="ghost" type="button">刷新</button>
+        <button id="refresh" class="ghost" type="button">Refresh</button>
       </section>
 
       <p id="message" class="message" role="status"></p>
-      <section id="skills" class="skills" aria-live="polite"></section>
+      <section id="skills" class="skill-list" aria-live="polite"></section>
     </main>
     <script src="/app.js"></script>
   </body>
