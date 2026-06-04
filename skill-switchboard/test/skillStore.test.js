@@ -158,3 +158,39 @@ test('createSwitchboardStore keeps categories separated and supports plugin sour
   assert.equal((await fs.stat(path.join(pluginDisabledDir, 'browser', 'SKILL.md'))).isFile(), true);
   assert.equal((await fs.stat(path.join(personalDir, 'brainstorming', 'SKILL.md'))).isFile(), true);
 });
+
+test('createSwitchboardStore reports source summaries and filters skills by source', async () => {
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'skill-switchboard-sources-'));
+  const continueDir = path.join(root, 'continue', 'skills');
+  const continueDisabledDir = path.join(root, 'continue', 'skills.disabled');
+  const claudeDir = path.join(root, 'claude', 'skills');
+  const claudeDisabledDir = path.join(root, 'claude', 'skills.disabled');
+
+  await createSkill(continueDir, 'continue-only');
+  await createSkill(claudeDir, 'claude-only');
+
+  const { createSwitchboardStore } = require('../src/skillStore');
+  const store = createSwitchboardStore({
+    categories: [{
+      id: 'custom',
+      label: 'Custom',
+      sources: [
+        { id: 'continue', label: 'Continue', skillsDir: continueDir, disabledDir: continueDisabledDir },
+        { id: 'claude', label: 'Claude', skillsDir: claudeDir, disabledDir: claudeDisabledDir },
+        { id: 'tme-claude', label: 'TME Claude', skillsDir: path.join(root, 'tme', 'skills'), disabledDir: path.join(root, 'tme', 'skills.disabled') }
+      ]
+    }]
+  });
+
+  const categories = await store.listCategories();
+  const custom = categories.find((category) => category.id === 'custom');
+  assert.deepEqual(custom.sources.map((source) => [source.id, source.label, source.total]), [
+    ['continue', 'Continue', 1],
+    ['claude', 'Claude', 1],
+    ['tme-claude', 'TME Claude', 0]
+  ]);
+
+  assert.deepEqual((await store.listSkills('custom', 'continue')).map((skill) => skill.name), ['continue-only']);
+  assert.deepEqual((await store.listSkills('custom', 'claude')).map((skill) => skill.name), ['claude-only']);
+  assert.deepEqual(await store.listSkills('custom', 'tme-claude'), []);
+});

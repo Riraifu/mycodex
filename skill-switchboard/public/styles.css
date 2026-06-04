@@ -283,6 +283,78 @@ h1 {
   display: block;
 }
 
+.source-tabs {
+  display: none;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 10px;
+  margin: 12px 0 0;
+  padding: 12px;
+  border: 1px solid rgba(55, 70, 62, 0.12);
+  border-radius: 24px;
+  background:
+    linear-gradient(135deg, rgba(255, 252, 245, 0.48), rgba(220, 233, 208, 0.44)),
+    rgba(255, 250, 240, 0.42);
+  box-shadow: 0 12px 28px rgba(62, 47, 21, 0.08);
+}
+
+.source-tabs.visible {
+  display: grid;
+}
+
+.source-tab {
+  position: relative;
+  overflow: hidden;
+  min-height: 68px;
+  border: 1px solid rgba(55, 70, 62, 0.14);
+  border-radius: 18px;
+  padding: 13px 14px;
+  background: rgba(255, 252, 245, 0.64);
+  color: var(--muted);
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 160ms ease, background 160ms ease, transform 160ms ease, box-shadow 160ms ease;
+}
+
+.source-tab::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(31, 143, 100, 0.14), rgba(242, 204, 122, 0.12));
+  opacity: 0;
+  transition: opacity 160ms ease;
+}
+
+.source-tab:hover,
+.source-tab.active {
+  border-color: rgba(31, 143, 100, 0.34);
+  background: rgba(255, 252, 245, 0.92);
+  box-shadow: 0 14px 28px rgba(62, 47, 21, 0.1);
+  transform: translateY(-1px);
+}
+
+.source-tab.active::before {
+  opacity: 1;
+}
+
+.source-tab strong,
+.source-tab span {
+  position: relative;
+  z-index: 1;
+  display: block;
+}
+
+.source-tab strong {
+  color: var(--slate);
+  font-size: 0.95rem;
+  font-weight: 950;
+}
+
+.source-tab span {
+  margin-top: 7px;
+  color: var(--faint);
+  font-size: 0.74rem;
+}
+
 .search {
   display: grid;
   gap: 8px;
@@ -561,11 +633,13 @@ h1 {
 
 .hero-panel,
 .bulk-panel,
+.source-tabs,
 .controls {
   animation: rise-in 520ms both cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 .bulk-panel { animation-delay: 90ms; }
+.source-tabs { animation-delay: 115ms; }
 .controls { animation-delay: 140ms; }
 
 @media (max-width: 820px) {
@@ -583,6 +657,10 @@ h1 {
 
   .category-tabs {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .source-tabs {
+    grid-template-columns: 1fr;
   }
 
   .stats {

@@ -3,11 +3,13 @@
 const state = {
   categories: [],
   activeCategory: 'personal',
+  activeSources: {},
   skills: [],
   query: ''
 };
 
 const categoryTabsEl = document.querySelector('#category-tabs');
+const sourceTabsEl = document.querySelector('#source-tabs');
 const categoryTitleEl = document.querySelector('#category-title');
 const categoryDescriptionEl = document.querySelector('#category-description');
 const categoryWarningEl = document.querySelector('#category-warning');
@@ -23,6 +25,25 @@ const totalCountEl = document.querySelector('#total-count');
 
 function activeCategory() {
   return state.categories.find((category) => category.id === state.activeCategory) || state.categories[0];
+}
+
+function sourceList(category = activeCategory()) {
+  return category && Array.isArray(category.sources) ? category.sources : [];
+}
+
+function activeSourceId(category = activeCategory()) {
+  const sources = sourceList(category);
+  const selected = state.activeSources[category?.id] || 'all';
+  if (selected === 'all' || sources.some((source) => source.id === selected)) {
+    return selected;
+  }
+  return 'all';
+}
+
+function sourceQuery() {
+  const selected = activeSourceId();
+  if (!selected || selected === 'all') return '';
+  return `?sourceId=${encodeURIComponent(selected)}`;
 }
 
 function setMessage(text, isError = false) {
@@ -65,10 +86,55 @@ function renderCategories() {
       state.query = '';
       searchEl.value = '';
       renderCategories();
+      renderSources();
       await loadSkills();
     });
 
     categoryTabsEl.append(button);
+  }
+}
+
+function renderSources() {
+  const category = activeCategory();
+  const sources = sourceList(category);
+  sourceTabsEl.innerHTML = '';
+
+  if (!category || sources.length <= 1) {
+    sourceTabsEl.classList.remove('visible');
+    return;
+  }
+
+  sourceTabsEl.classList.add('visible');
+
+  const allEnabled = sources.reduce((sum, source) => sum + source.enabled, 0);
+  const allDisabled = sources.reduce((sum, source) => sum + source.disabled, 0);
+  const allTotal = sources.reduce((sum, source) => sum + source.total, 0);
+  const tabs = [
+    { id: 'all', label: 'All directories', total: allTotal, enabled: allEnabled, disabled: allDisabled },
+    ...sources
+  ];
+  const selected = activeSourceId(category);
+
+  for (const source of tabs) {
+    const button = document.createElement('button');
+    button.className = `source-tab ${source.id === selected ? 'active' : ''}`;
+    button.type = 'button';
+    button.setAttribute('aria-pressed', String(source.id === selected));
+
+    const label = document.createElement('strong');
+    label.textContent = source.label;
+    const counts = document.createElement('span');
+    counts.textContent = `${source.enabled} on / ${source.disabled} off / ${source.total} total`;
+    button.append(label, counts);
+
+    button.addEventListener('click', async () => {
+      if (activeSourceId(category) === source.id) return;
+      state.activeSources[category.id] = source.id;
+      renderSources();
+      await loadSkills({ refreshCategories: false });
+    });
+
+    sourceTabsEl.append(button);
   }
 }
 
@@ -89,6 +155,7 @@ function render() {
   skillsEl.innerHTML = '';
   updateStats();
   renderCategoryDetails();
+  renderSources();
 
   if (visible.length === 0) {
     const empty = document.createElement('p');
@@ -152,20 +219,28 @@ async function loadCategories() {
   if (!state.categories.some((category) => category.id === state.activeCategory)) {
     state.activeCategory = state.categories[0] ? state.categories[0].id : 'personal';
   }
+  const category = activeCategory();
+  if (category && activeSourceId(category) !== (state.activeSources[category.id] || 'all')) {
+    state.activeSources[category.id] = 'all';
+  }
   renderCategories();
+  renderSources();
 }
 
 async function loadSkills() {
   const category = activeCategory();
   if (!category) return;
-  setMessage(`正在读取 ${category.label} skills...`);
-  const response = await fetch(`/api/categories/${encodeURIComponent(state.activeCategory)}/skills`);
+  const selectedSourceId = activeSourceId(category);
+  const source = sourceList(category).find((candidate) => candidate.id === selectedSourceId);
+  const scopeName = source ? `${category.label} / ${source.label}` : category.label;
+  setMessage(`正在读取 ${scopeName} skills...`);
+  const response = await fetch(`/api/categories/${encodeURIComponent(state.activeCategory)}/skills${sourceQuery()}`);
   const body = await response.json();
   if (!response.ok) {
     throw new Error(body.error || '读取失败');
   }
   state.skills = body.skills;
-  setMessage(`已读取 ${category.label} 分类里的 ${state.skills.length} 个 skill。`);
+  setMessage(`已读取 ${scopeName} 里的 ${state.skills.length} 个 skill。`);
   render();
 }
 
@@ -197,13 +272,16 @@ async function toggleSkill(skill) {
 
 async function setAllSkills(enabled) {
   const category = activeCategory();
-  setMessage(`${enabled ? '开启' : '关闭'} ${category.label} 分类里的所有可编辑 skills...`);
+  const selectedSourceId = activeSourceId(category);
+  const source = sourceList(category).find((candidate) => candidate.id === selectedSourceId);
+  const scopeName = source ? `${category.label} / ${source.label}` : category.label;
+  setMessage(`${enabled ? '开启' : '关闭'} ${scopeName} 里的所有可编辑 skills...`);
 
   try {
     const response = await fetch(`/api/categories/${encodeURIComponent(state.activeCategory)}/skills/bulk`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ enabled })
+      body: JSON.stringify({ enabled, sourceId: selectedSourceId === 'all' ? undefined : selectedSourceId })
     });
     const body = await response.json();
     if (!response.ok) {
@@ -211,7 +289,7 @@ async function setAllSkills(enabled) {
     }
     const changed = body.result.changed.length;
     const skipped = body.result.skipped.length;
-    setMessage(`${category.label} 已${enabled ? '开启' : '关闭'} ${changed} 个 skill，跳过 ${skipped} 个。`);
+    setMessage(`${scopeName} 已${enabled ? '开启' : '关闭'} ${changed} 个 skill，跳过 ${skipped} 个。`);
     await refreshAll();
   } catch (error) {
     setMessage(error.message, true);

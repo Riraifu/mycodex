@@ -65,16 +65,16 @@ function createServer({ store, publicDir = DEFAULT_PUBLIC_DIR }) {
   const resolvedPublicDir = path.resolve(publicDir);
   const hasCategories = typeof store.listCategories === 'function';
 
-  function listSkills(categoryId) {
-    return hasCategories ? store.listSkills(categoryId) : store.listSkills();
+  function listSkills(categoryId, sourceId) {
+    return hasCategories ? store.listSkills(categoryId, sourceId) : store.listSkills(sourceId);
   }
 
   function toggleSkill(categoryId, skillId, enabled) {
     return hasCategories ? store.toggleSkill(categoryId, skillId, enabled) : store.toggleSkill(skillId, enabled);
   }
 
-  function setAllSkills(categoryId, enabled) {
-    return hasCategories ? store.setAllSkills(categoryId, enabled) : store.setAllSkills(enabled);
+  function setAllSkills(categoryId, enabled, sourceId) {
+    return hasCategories ? store.setAllSkills(categoryId, enabled, sourceId) : store.setAllSkills(enabled, sourceId);
   }
 
   return http.createServer(async (request, response) => {
@@ -88,7 +88,7 @@ function createServer({ store, publicDir = DEFAULT_PUBLIC_DIR }) {
       }
 
       if (request.method === 'GET' && url.pathname === '/api/health') {
-        sendJson(response, 200, { ok: true, features: ['bulk', 'categories', 'custom-directories'] });
+        sendJson(response, 200, { ok: true, features: ['bulk', 'categories', 'custom-directories', 'source-filtering'] });
         return;
       }
 
@@ -101,7 +101,8 @@ function createServer({ store, publicDir = DEFAULT_PUBLIC_DIR }) {
       const categorySkillsMatch = url.pathname.match(/^\/api\/categories\/([^/]+)\/skills$/);
       if (request.method === 'GET' && categorySkillsMatch) {
         const categoryId = decodeURIComponent(categorySkillsMatch[1]);
-        const skills = await listSkills(categoryId);
+        const sourceId = url.searchParams.get('sourceId') || undefined;
+        const skills = await listSkills(categoryId, sourceId);
         sendJson(response, 200, { skills });
         return;
       }
@@ -110,7 +111,8 @@ function createServer({ store, publicDir = DEFAULT_PUBLIC_DIR }) {
       if (request.method === 'POST' && categoryBulkMatch) {
         const body = await readJson(request);
         const categoryId = decodeURIComponent(categoryBulkMatch[1]);
-        const result = await setAllSkills(categoryId, Boolean(body.enabled));
+        const sourceId = body.sourceId || url.searchParams.get('sourceId') || undefined;
+        const result = await setAllSkills(categoryId, Boolean(body.enabled), sourceId);
         sendJson(response, 200, { result });
         return;
       }

@@ -99,6 +99,7 @@ test('GET /api/health reports available features', async (t) => {
   assert.equal(body.ok, true);
   assert.equal(body.features.includes('bulk'), true);
   assert.equal(body.features.includes('custom-directories'), true);
+  assert.equal(body.features.includes('source-filtering'), true);
 });
 
 test('category API lists categories and toggles only within the requested category', async (t) => {
@@ -142,4 +143,42 @@ test('category API lists categories and toggles only within the requested catego
   assert.equal(response.status, 200);
   assert.equal((await fs.stat(path.join(agentDisabledDir, 'gold-trump-monitor', 'SKILL.md'))).isFile(), true);
   assert.equal((await fs.stat(path.join(personalDir, 'brainstorming', 'SKILL.md'))).isFile(), true);
+});
+
+test('category API filters skills by sourceId query parameter', async (t) => {
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'skill-switchboard-source-http-'));
+  const continueDir = path.join(root, 'continue', 'skills');
+  const continueDisabledDir = path.join(root, 'continue', 'skills.disabled');
+  const claudeDir = path.join(root, 'claude', 'skills');
+  const claudeDisabledDir = path.join(root, 'claude', 'skills.disabled');
+  const publicDir = path.join(root, 'public');
+
+  await fs.mkdir(publicDir, { recursive: true });
+  await fs.writeFile(path.join(publicDir, 'index.html'), '<h1>ok</h1>');
+  await fs.mkdir(path.join(continueDir, 'continue-only'), { recursive: true });
+  await fs.writeFile(path.join(continueDir, 'continue-only', 'SKILL.md'), '---\nname: continue-only\n---\n');
+  await fs.mkdir(path.join(claudeDir, 'claude-only'), { recursive: true });
+  await fs.writeFile(path.join(claudeDir, 'claude-only', 'SKILL.md'), '---\nname: claude-only\n---\n');
+
+  const { createSwitchboardStore } = require('../src/skillStore');
+  const store = createSwitchboardStore({
+    categories: [{
+      id: 'custom',
+      label: 'Custom',
+      sources: [
+        { id: 'continue', label: 'Continue', skillsDir: continueDir, disabledDir: continueDisabledDir },
+        { id: 'claude', label: 'Claude', skillsDir: claudeDir, disabledDir: claudeDisabledDir }
+      ]
+    }]
+  });
+  const server = createServer({ store, publicDir });
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+  t.after(() => server.close());
+  const baseUrl = `http://127.0.0.1:${server.address().port}`;
+
+  const categories = await (await fetch(`${baseUrl}/api/categories`)).json();
+  assert.deepEqual(categories.categories[0].sources.map((source) => [source.id, source.total]), [['continue', 1], ['claude', 1]]);
+
+  const claude = await (await fetch(`${baseUrl}/api/categories/custom/skills?sourceId=claude`)).json();
+  assert.deepEqual(claude.skills.map((skill) => skill.name), ['claude-only']);
 });

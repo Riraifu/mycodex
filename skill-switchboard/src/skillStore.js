@@ -80,6 +80,16 @@ function createSkillStore(options) {
     return hasMultipleSources ? `${source.id}:${name}` : name;
   }
 
+  function getSource(sourceId) {
+    if (!sourceId) return null;
+    assertValidId(sourceId, 'Invalid source id');
+    const source = sources.find((candidate) => candidate.id === sourceId);
+    if (!source) {
+      throw createHttpError(404, 'Source not found');
+    }
+    return source;
+  }
+
   async function readSkillEntries(source, parent, enabled) {
     await fs.mkdir(parent, { recursive: true });
     const entries = await fs.readdir(parent, { withFileTypes: true });
@@ -103,10 +113,11 @@ function createSkillStore(options) {
     return skills;
   }
 
-  async function listSkills() {
+  async function listSkills(sourceId) {
     const all = [];
+    const selectedSources = sourceId ? [getSource(sourceId)] : sources;
 
-    for (const source of sources) {
+    for (const source of selectedSources) {
       const enabled = await readSkillEntries(source, source.skillsDir, true);
       const disabled = await readSkillEntries(source, source.disabledDir, false);
       const byId = new Map();
@@ -122,6 +133,26 @@ function createSkillStore(options) {
     }
 
     return all.sort((a, b) => a.name.localeCompare(b.name) || a.sourceLabel.localeCompare(b.sourceLabel));
+  }
+
+  async function listSources() {
+    const summaries = [];
+
+    for (const source of sources) {
+      const skills = await listSkills(source.id);
+      const editable = skills.filter((skill) => !skill.reserved);
+      summaries.push({
+        id: source.id,
+        label: source.label,
+        skillsDir: source.skillsDir,
+        disabledDir: source.disabledDir,
+        total: skills.length,
+        enabled: editable.filter((skill) => skill.enabled).length,
+        disabled: editable.filter((skill) => !skill.enabled).length
+      });
+    }
+
+    return summaries;
   }
 
   async function findSkill(inputId) {
@@ -172,8 +203,8 @@ function createSkillStore(options) {
     };
   }
 
-  async function setAllSkills(enabled) {
-    const skills = await listSkills();
+  async function setAllSkills(enabled, sourceId) {
+    const skills = await listSkills(sourceId);
     const changed = [];
     const skipped = [];
 
@@ -204,6 +235,7 @@ function createSkillStore(options) {
 
   return {
     listSkills,
+    listSources,
     toggleSkill,
     setAllSkills,
     isReserved
@@ -235,6 +267,7 @@ function createSwitchboardStore({ categories }) {
         label: category.label,
         description: category.description || '',
         warning: category.warning || '',
+        sources: await category.store.listSources(),
         total: skills.length,
         enabled: editable.filter((skill) => skill.enabled).length,
         disabled: editable.filter((skill) => !skill.enabled).length
@@ -243,16 +276,16 @@ function createSwitchboardStore({ categories }) {
     return result;
   }
 
-  async function listSkills(categoryId = 'personal') {
-    return getCategory(categoryId).store.listSkills();
+  async function listSkills(categoryId = 'personal', sourceId) {
+    return getCategory(categoryId).store.listSkills(sourceId);
   }
 
   async function toggleSkill(categoryId, skillId, enabled) {
     return getCategory(categoryId).store.toggleSkill(skillId, enabled);
   }
 
-  async function setAllSkills(categoryId, enabled) {
-    return getCategory(categoryId).store.setAllSkills(enabled);
+  async function setAllSkills(categoryId, enabled, sourceId) {
+    return getCategory(categoryId).store.setAllSkills(enabled, sourceId);
   }
 
   return {
