@@ -88,7 +88,7 @@ function createServer({ store, publicDir = DEFAULT_PUBLIC_DIR }) {
       }
 
       if (request.method === 'GET' && url.pathname === '/api/health') {
-        sendJson(response, 200, { ok: true, features: ['bulk', 'categories'] });
+        sendJson(response, 200, { ok: true, features: ['bulk', 'categories', 'custom-directories'] });
         return;
       }
 

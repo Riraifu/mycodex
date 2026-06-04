@@ -1,0 +1,10 @@
+{
+  "directories": [
+    {
+      "id": "my-extra-skills",
+      "label": "My Extra Skills",
+      "skillsDir": "~/path/to/skills",
+      "disabledDir": "~/path/to/skills.disabled"
+    }
+  ]
+}

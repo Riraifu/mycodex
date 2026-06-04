@@ -98,6 +98,7 @@ test('GET /api/health reports available features', async (t) => {
   assert.equal(response.status, 200);
   assert.equal(body.ok, true);
   assert.equal(body.features.includes('bulk'), true);
+  assert.equal(body.features.includes('custom-directories'), true);
 });
 
 test('category API lists categories and toggles only within the requested category', async (t) => {

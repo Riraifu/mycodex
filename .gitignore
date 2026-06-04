@@ -10,3 +10,6 @@ tmeoa-card-monitor/state.json.bak*
 tmeoa-card-monitor/logs/
 tmeoa-card-monitor/chrome-profile/
 tmeoa-card-monitor/popup-profile/
+
+# Skill Switchboard local custom directory config
+skill-switchboard/custom-skill-directories.json

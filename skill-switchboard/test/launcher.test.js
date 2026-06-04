@@ -16,7 +16,7 @@ test('desktop launcher command starts the server in the background and opens the
   assert.match(content, /ProgramArguments/);
   assert.match(content, /open "\$URL"/);
   assert.match(content, /curl -fsS "\$URL\/api\/health"/);
-  assert.match(content, /curl -fsS "\$URL\/api\/categories"/);
+  assert.match(content, /custom-directories/);
   assert.match(content, /lsof -tiTCP:8787 -sTCP:LISTEN/);
   assert.match(content, /kill "\$existing_pid"/);
 });

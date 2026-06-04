@@ -18,7 +18,7 @@ echo "App: $APP_DIR"
 echo "URL: $URL"
 echo ""
 
-if curl -fsS "$URL/api/health" >/dev/null 2>&1 && curl -fsS "$URL/api/categories" >/dev/null 2>&1; then
+if curl -fsS "$URL/api/health" 2>/dev/null | grep -q "custom-directories"; then
   echo "Skill Switchboard is already running. Opening browser..."
   open "$URL"
   exit 0
@@ -79,7 +79,7 @@ launchctl bootstrap "gui/$UID" "$PLIST" >/dev/null 2>&1 || true
 launchctl kickstart -k "gui/$UID/$LABEL" >/dev/null 2>&1 || true
 
 for attempt in {1..40}; do
-  if curl -fsS "$URL/api/health" >/dev/null 2>&1 && curl -fsS "$URL/api/categories" >/dev/null 2>&1; then
+  if curl -fsS "$URL/api/health" 2>/dev/null | grep -q "custom-directories"; then
     echo "Server is ready. Opening browser..."
     open "$URL"
     echo ""
